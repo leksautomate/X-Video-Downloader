@@ -1,6 +1,6 @@
 # ⬇️ X Video Downloader
 
-[![Version](https://img.shields.io/badge/version-1.1.0-blue)](https://github.com/leksautomate/X-Video-Downloader)
+[![Version](https://img.shields.io/badge/version-1.2.0-blue)](https://github.com/leksautomate/X-Video-Downloader)
 [![Platform](https://img.shields.io/badge/platform-Chrome%20MV3-green)](https://developer.chrome.com/docs/extensions/)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 [![No ads](https://img.shields.io/badge/ads-none-brightgreen)]()
@@ -12,6 +12,7 @@ Download videos and GIFs from X (Twitter) in one click — straight from X's own
 
 - **One-click downloads** — a download button appears on every video/GIF in your feed and on tweet pages. Best quality by default.
 - **Quality picker** — every quality X serves (720p, 480p, …), selectable per video in the popup.
+- **True HD (1080p)** — X's direct MP4s top out around 720p, but the stream carries up to 1080p. Pick the **HD** option and the extension fetches the stream's pieces and assembles the full-resolution MP4 with audio right in your browser (no servers involved). A progress bar shows the build; the citation file notes it was stream-assembled.
 - **Thread batch download** — "Download all" grabs every video on the page at once, neatly organized into `XVideos/thread_<id>/`.
 - **Provenance sidecar** — each download ships a `.json` citation file (tweet URL, author, post date, caption, quality, source URL). Built for journalists, researchers, and archivists.
 - **Breakage-proof detection** — two independent strategies (API traffic sniffing + page HTML sweep) with automatic fallback, plus a **Rescan** button. X changes its layout often; this keeps working.
@@ -25,20 +26,22 @@ Download videos and GIFs from X (Twitter) in one click — straight from X's own
 4. Click **Load unpacked** and select the `x-video-downloader` folder.
 5. Pin it: click the puzzle-piece icon in the toolbar → pin **X Video Downloader**.
 
-The only permission requested is `downloads`.
+The only permissions requested are `downloads`, plus read access to `video.twimg.com` (needed to fetch stream pieces for the HD option — same CDN the videos already come from).
 
 ## 🚀 Usage
 
 1. Go to [x.com](https://x.com) (log in if the video needs it — same as watching).
 2. Scroll until the video loads. A round download button appears at the top-right of the video — click it for best quality.
-3. Or click the extension icon: pick a quality per video, download one, or hit **Download all** for the whole thread.
-4. Files land in `Downloads/XVideos/` as `xdl_<author>_<tweetid>_<quality>.mp4`, each next to its `.json` citation file.
+3. Or click the extension icon: pick a quality per video — choose the **HD** option (e.g. *1080p HD*) when you want full resolution; it takes a little longer while the file is assembled. Download one, or hit **Download all** for the whole thread.
+4. Files land in `Downloads/XVideos/` as `xdl_<author>_<tweetid>_<quality>.mp4` (HD files are tagged e.g. `_1080p-HD.mp4`), each next to its `.json` citation file.
 
 > Videos are detected as they load — if the popup is empty, scroll the feed, open the tweet, or hit **Rescan**.
 
 ## 🔧 How it works
 
-X's web app fetches video metadata (a `video_info.variants` list with direct MP4 URLs) from its own internal API. The extension observes that traffic inside the page, extracts every MP4 variant, and downloads your pick with Chrome's built-in downloader. If the API traffic isn't visible (cached pages, layout changes), it falls back to scanning the page HTML for direct `video.twimg.com` links. Nothing is uploaded anywhere and no external service is involved.
+X's web app fetches video metadata (a `video_info.variants` list with direct MP4 URLs) from its own internal API. The extension observes that traffic inside the page, extracts every MP4 variant, and downloads your pick with Chrome's built-in downloader. If the API traffic isn't visible (cached pages, layout changes), it falls back to scanning the page HTML for direct `video.twimg.com` links.
+
+**HD mode:** X only offers ~720p as direct MP4s, but its HLS stream carries higher renditions (usually 1080p). For the HD option, the extension reads the stream playlist, downloads the video + audio pieces, and remuxes them into a single MP4 with a built-in zero-dependency fMP4 remuxer (`hd-mux.js`) — all inside a hidden offscreen document in your browser. Nothing is uploaded anywhere and no external service is involved.
 
 ## 🔒 Privacy
 
@@ -53,6 +56,10 @@ X's web app fetches video metadata (a `video_info.variants` list with direct MP4
 |---|---|
 | `manifest.json` | Extension manifest (Manifest V3) |
 | `lib.js` | Shared helpers: quality labels, filenames, citation files |
+| `hls.js` | HLS (m3u8) playlist parser — finds the top stream rendition |
+| `hd-mux.js` | fMP4 remuxer: merges stream video+audio pieces into one MP4 |
+| `offscreen.html` / `offscreen.js` | Hidden worker that runs the HD pipeline |
+| `hd-mux.js` | zero-dependency fMP4 → MP4 remuxer (no third-party code) |
 | `page-hook.js` | Runs in the page, sniffs X's API responses for video URLs |
 | `content.js` | Injects the hook, HTML-sweep fallback, overlay buttons, batch logic |
 | `background.js` | Service worker — performs downloads + citation files |

@@ -39,7 +39,8 @@ var XDL = (function () {
   }
 
   // Provenance sidecar: who posted it, when, where it came from.
-  function buildSidecar(v, label, videoFilename) {
+  // `extra` merges additional fields (e.g. { method: 'hls-remux' }).
+  function buildSidecar(v, label, videoFilename, extra) {
     var data = {
       tool: 'X Video Downloader',
       tweet_url: v.tweetId ? 'https://x.com/i/status/' + v.tweetId : null,
@@ -52,6 +53,11 @@ var XDL = (function () {
       source_url: v.url || null,
       downloaded_at: new Date().toISOString()
     };
+    if (extra) {
+      for (var k in extra) {
+        if (Object.prototype.hasOwnProperty.call(extra, k)) data[k] = extra[k];
+      }
+    }
     return {
       filename: videoFilename.replace(/\.mp4$/i, '') + '.json',
       json: JSON.stringify(data, null, 2)

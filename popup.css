@@ -148,6 +148,38 @@ header p {
   background: #1a8cd8;
 }
 
+.row .ops button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.hdprog {
+  display: none;
+  height: 5px;
+  background: #16181c;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 6px;
+}
+
+.hdprog.on {
+  display: block;
+}
+
+.hdbar {
+  height: 100%;
+  width: 0;
+  background: #1d9bf0;
+  transition: width 0.2s ease;
+}
+
+.hdpct {
+  font-size: 10px;
+  color: #71767b;
+  margin-top: 3px;
+  min-height: 12px;
+}
+
 .row .ops {
   display: flex;
   flex-direction: column;
